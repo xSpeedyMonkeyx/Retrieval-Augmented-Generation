@@ -1,6 +1,7 @@
 from transformers import pipeline
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from embed_document import split_document, embed_text_chunks  # Import helper functions
 
 def retrieve_relevant_chunks(query, chunk_embeddings, model):
     """
@@ -12,7 +13,7 @@ def retrieve_relevant_chunks(query, chunk_embeddings, model):
         model (SentenceTransformer): The SentenceTransformer model used for encoding.
         
     Returns:
-        list of tuples: Each tuple contains (text_chunk, similarity_score) for the top 3 similar chunks.
+        list of tuples: A list containing tuples (text_chunk, similarity_score) for the top 3 similar chunks.
     """
     # Generate the embedding for the query
     query_embedding = model.encode(query)
@@ -23,13 +24,13 @@ def retrieve_relevant_chunks(query, chunk_embeddings, model):
         sim = cosine_similarity([query_embedding], [embedding])[0][0]
         similarities[chunk] = sim
     
-    # Sort the chunks by similarity in descending order and pick the top 3
+    # Sort the chunks by similarity in descending order and pick the top 3 chunks
     top_chunks = sorted(similarities.items(), key=lambda x: x[1], reverse=True)[:3]
     return top_chunks
 
 def generate_response(retrieved_chunks, query):
     """
-    Generates a text response using the "google/flan-t5-small" model based on the retrieved text chunks and a query.
+    Generates a text response using the "google/flan-t5-small" model based on the retrieved text chunks and the query.
     
     Parameters:
         retrieved_chunks (list): A list of tuples (text_chunk, similarity_score).
@@ -40,12 +41,19 @@ def generate_response(retrieved_chunks, query):
     """
     # Combine the retrieved chunks into a single context string
     combined_context = "\n\n".join([chunk for chunk, _ in retrieved_chunks])
-    # Create a prompt by combining context and query
+    
+    # Debug: Print out the retrieved chunks to verify what is being passed
+    print("Retrieved Chunks:")
+    print(combined_context)
+    print("-------------------")
+    
+    # Create a prompt by combining the context and the query
     prompt = f"Context:\n{combined_context}\n\nQuestion: {query}\nAnswer:"
     
     # Initialize the text generation pipeline using the Flan-T5 model
     generator = pipeline("text2text-generation", model="google/flan-t5-small")
-    # Generate a response; you can adjust max_length as needed
+    
+    # Generate a response; adjust max_length if needed
     generated = generator(prompt, max_length=256)[0]['generated_text']
     return generated
 
@@ -53,17 +61,9 @@ if __name__ == "__main__":
     # Load the SentenceTransformer model used for generating embeddings
     sentence_transformer_model = SentenceTransformer("all-MiniLM-L6-v2")
     
-    # Assume that chunk_embeddings has been generated already from your Selected_Document.txt
-    # For example, from your embed_document.py file:
-    #
-    #     chunk_embeddings = embed_text_chunks(text_chunks)
-    #
-    # Ensure that the variable chunk_embeddings is available here.
-    
-    # For demonstration purposes, if you need to load or generate your embeddings:
-    # from embed_document import split_document, embed_text_chunks
-    # text_chunks = split_document("Selected_Document.txt")
-    # chunk_embeddings = embed_text_chunks(text_chunks)
+    # Generate embeddings by reading and splitting Selected_Document.txt
+    text_chunks = split_document("Selected_Document.txt")
+    chunk_embeddings = embed_text_chunks(text_chunks)
     
     # Get a query from the user
     query = input("Enter your query: ")

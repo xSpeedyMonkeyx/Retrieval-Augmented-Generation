@@ -26,11 +26,16 @@ def load_vulture_article(url):
     cleaned_text = "\n\n".join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
     return cleaned_text
 
-# URL of the Vulture article featuring an interview with Jack White
-article_url = "https://www.vulture.com/2022/07/interview-jack-white-best-worst-superlatives.html"
-
-# Load and clean the article text
-article_text = load_vulture_article(article_url)
-
-# Output the cleaned text for further processing
-print(article_text)
+if __name__ == "__main__":
+    # URL of the Vulture article featuring an interview with Jack White
+    article_url = "https://www.vulture.com/2022/07/interview-jack-white-best-worst-superlatives.html"
+    
+    # Load and clean the article text
+    article_text = load_vulture_article(article_url)
+    
+    # Print the cleaned text to the terminal (optional)
+    print(article_text)
+    
+    # Save the cleaned text to a file named "Selected_Document.txt"
+    with open("Selected_Document.txt", "w", encoding="utf-8") as file:
+        file.write(article_text)
